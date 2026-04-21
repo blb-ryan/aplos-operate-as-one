@@ -6,7 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@1,2&f[]=sentient@500,501&display=swap" rel="stylesheet">
 <style>
   :root {
     --forest-900: #062922;
@@ -80,8 +83,9 @@
     box-shadow: 0 0 12px var(--mint-400);
   }
   h1 {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'General Sans Variable', 'General Sans', 'DM Sans', sans-serif;
     font-weight: 500;
+    font-variation-settings: 'wght' 500;
     font-size: clamp(52px, 6.2vw, 104px);
     line-height: 0.96;
     letter-spacing: -0.035em;
@@ -90,9 +94,9 @@
     text-wrap: balance;
   }
   h1 em {
-    font-family: 'Instrument Serif', serif;
+    font-family: 'Sentient', 'Instrument Serif', serif;
     font-style: italic;
-    font-weight: 400;
+    font-weight: 500;
     color: var(--mint-300);
     letter-spacing: -0.02em;
   }
