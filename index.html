@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Aplos Data — Operate as One</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest-900: #062922;
+    --forest-800: #0a3a31;
+    --forest-700: #0f4a3f;
+    --forest-600: #146152;
+    --mint-400: #7fcaa5;
+    --mint-300: #a8dcc2;
+    --mint-200: #c9ead9;
+    --mint-100: #e4f2ea;
+    --cream: #f5f3ee;
+    --ink: #062922;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--forest-900);
+    color: var(--cream);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .section {
+    position: relative;
+    height: 100vh;
+    min-height: 720px;
+    width: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 55% at 95% 50%, rgba(127, 202, 165, 0.22), transparent 60%),
+      radial-gradient(ellipse 50% 45% at 10% 85%, rgba(20, 97, 82, 0.55), transparent 60%),
+      linear-gradient(180deg, #062922 0%, #0a3a31 100%);
+  }
+  .section::before {
+    /* subtle grain */
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.04  0 0 0 0 0.18  0 0 0 0 0.12  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.35'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* (top nav removed — this is a mid-page section now) */
+
+  /* main layout */
+  .stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 96px 72px;
+    max-width: 1680px;
+    margin: 0 auto;
+    z-index: 2;
+  }
+  @media (max-width: 720px) {
+    .stage { padding: 80px 32px; }
+  }
+
+  .copy { z-index: 5; max-width: 620px; position: relative; }
+  .kicker {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--mint-300);
+    margin-bottom: 28px;
+  }
+  .kicker .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--mint-400);
+    box-shadow: 0 0 12px var(--mint-400);
+  }
+  h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: clamp(52px, 6.2vw, 104px);
+    line-height: 0.96;
+    letter-spacing: -0.035em;
+    margin: 0 0 28px;
+    color: var(--cream);
+    text-wrap: balance;
+  }
+  h1 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--mint-300);
+    letter-spacing: -0.02em;
+  }
+  .sub {
+    font-size: 19px; line-height: 1.55;
+    color: rgba(245,243,238,0.72);
+    max-width: 500px;
+    margin: 0 0 36px;
+  }
+  .actions { display: flex; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: all 200ms ease;
+    border: 1px solid transparent;
+  }
+  .btn-primary {
+    background: var(--mint-300);
+    color: var(--forest-900);
+  }
+  .btn-primary:hover { background: var(--mint-200); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--cream);
+    border-color: rgba(245,243,238,0.25);
+  }
+  .btn-ghost:hover { border-color: var(--mint-300); color: var(--mint-200); }
+  .btn svg { width: 14px; height: 14px; }
+
+  /* stats strip */
+  .stats {
+    display: flex; gap: 40px;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(245,243,238,0.12);
+  }
+  .stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px; font-weight: 400;
+    color: var(--mint-300);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(245,243,238,0.5);
+    margin-top: 8px;
+  }
+
+  /* sphere — bleeds off the right edge so only the left ~half is visible */
+  .sphere-wrap {
+    position: absolute;
+    top: 50%;
+    /* The sphere is a big square; we shift it so its center sits beyond the
+       right edge. About 55% of the sphere's width is off-screen. */
+    left: 50%;
+    transform: translate(0, -50%);
+    width: min(115vh, 1400px);
+    height: min(115vh, 1400px);
+    max-width: none;
+    pointer-events: auto;
+    z-index: 1;
+  }
+  @media (max-width: 720px) {
+    .sphere-wrap {
+      position: relative;
+      left: auto; top: auto;
+      transform: none;
+      width: 130vw;
+      height: 130vw;
+      margin: 40px -15vw 0;
+    }
+  }
+  .sphere-wrap::before {
+    /* inner glow disk */
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 70%; height: 70%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(127,202,165,0.22), rgba(127,202,165,0) 60%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .sphere {
+    position: absolute; inset: 0;
+    cursor: grab;
+  }
+  .sphere.dragging { cursor: grabbing; }
+  .sphere canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+  .nodes { position: absolute; inset: 0; }
+  .node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    will-change: transform, opacity;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .node-inner {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: var(--tile-bg, #ffffff);
+    color: var(--tile-fg, #0a3a31);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    box-shadow:
+      0 6px 14px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: box-shadow 200ms ease, transform 200ms ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .node:hover .node-inner {
+    box-shadow:
+      0 0 0 2px var(--mint-300),
+      0 10px 30px rgba(127,202,165,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    transform: scale(1.08);
+  }
+  .node.active .node-inner {
+    box-shadow:
+      0 0 0 2px var(--mint-300),
+      0 10px 30px rgba(127,202,165,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .node-mark {
+    font-size: calc(var(--tile-size, 40px) * 0.42);
+    line-height: 1;
+  }
+  .node-logo {
+    width: 54%;
+    height: 54%;
+    object-fit: contain;
+    /* Logos come from Simple Icons in their default dark color (#111);
+       force pure black so every tile reads the same. */
+    filter: brightness(0);
+  }
+  body.theme-light .node-logo { filter: brightness(0); }
+  /* (category dot removed — categories live in the legend below the CTAs) */
+
+  /* tooltip */
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(6,41,34,0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(127,202,165,0.3);
+    color: var(--cream);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    white-space: nowrap;
+    transform: translate(-50%, calc(-100% - 14px));
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 140ms ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip-name { font-weight: 600; color: var(--cream); }
+  .tooltip-cat {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mint-300);
+    margin-top: 2px;
+  }
+  .tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: -5px; left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px; height: 8px;
+    background: rgba(6,41,34,0.95);
+    border-right: 1px solid rgba(127,202,165,0.3);
+    border-bottom: 1px solid rgba(127,202,165,0.3);
+  }
+
+  /* category legend — lives under the CTA buttons in the copy column */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px 22px;
+    margin-top: 44px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(245,243,238,0.12);
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(245,243,238,0.6);
+    max-width: 560px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: color 150ms; }
+  .legend-item:hover { color: var(--cream); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--mint-400)); box-shadow: 0 0 8px var(--c, var(--mint-400)); }
+
+  /* hint */
+  .hint {
+    position: absolute;
+    bottom: 36px; right: 48px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(245,243,238,0.4);
+    display: flex; align-items: center; gap: 10px;
+    z-index: 10;
+  }
+  .hint kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    border: 1px solid rgba(245,243,238,0.2);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 10px;
+    color: rgba(245,243,238,0.7);
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* tweaks panel */
+  .tweaks {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    width: 280px;
+    padding: 18px 18px 14px;
+    background: rgba(6,41,34,0.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(127,202,165,0.2);
+    border-radius: 16px;
+    color: var(--cream);
+    font-size: 12px;
+    z-index: 1000;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    display: none;
+  }
+  .tweaks.on { display: block; }
+  .tweaks h4 {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mint-300);
+    margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tweak {
+    margin-bottom: 12px;
+  }
+  .tweak label {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    color: rgba(245,243,238,0.7);
+    margin-bottom: 6px;
+  }
+  .tweak label b { color: var(--mint-200); font-weight: 500; }
+  .tweak input[type="range"] {
+    width: 100%;
+    accent-color: var(--mint-300);
+  }
+  .seg {
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .seg button {
+    flex: 1;
+    padding: 6px 0;
+    background: transparent;
+    color: rgba(245,243,238,0.6);
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .seg button.on {
+    background: var(--mint-300);
+    color: var(--forest-900);
+    font-weight: 600;
+  }
+
+  /* light theme */
+  body.theme-light .section {
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(127, 202, 165, 0.25), transparent 60%),
+      linear-gradient(180deg, #f5f3ee 0%, #e4f2ea 100%);
+    color: var(--forest-900);
+  }
+  body.theme-light .section::before { display: none; }
+  body.theme-light .logo-word,
+  body.theme-light h1 { color: var(--forest-900); }
+  body.theme-light h1 em { color: var(--forest-700); }
+  body.theme-light .sub { color: rgba(6,41,34,0.7); }
+  body.theme-light .kicker { color: var(--forest-700); }
+  body.theme-light .nav { color: rgba(6,41,34,0.65); }
+  body.theme-light .nav a:hover { color: var(--forest-900); }
+  body.theme-light .stats { border-top-color: rgba(6,41,34,0.12); }
+  body.theme-light .stat-num { color: var(--forest-700); }
+  body.theme-light .stat-label { color: rgba(6,41,34,0.5); }
+  body.theme-light .btn-primary { background: var(--forest-700); color: var(--cream); }
+  body.theme-light .btn-primary:hover { background: var(--forest-800); }
+  body.theme-light .btn-ghost { color: var(--forest-900); border-color: rgba(6,41,34,0.2); }
+  body.theme-light .btn-ghost:hover { border-color: var(--forest-700); color: var(--forest-700); }
+  body.theme-light .legend { color: rgba(6,41,34,0.55); }
+  body.theme-light .hint { color: rgba(6,41,34,0.4); }
+  body.theme-light .hint kbd { border-color: rgba(6,41,34,0.2); color: rgba(6,41,34,0.6); background: rgba(0,0,0,0.03); }
+  body.theme-light .node-inner { box-shadow: 0 4px 12px rgba(6,41,34,0.18), inset 0 1px 0 rgba(255,255,255,0.6); }
+
+  /* dot matrix echoing the logo mark, as decoration */
+  .dot-matrix {
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 300px; height: 300px;
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 1;
+  }
+  body.theme-light .dot-matrix { opacity: 0.25; }
+</style>
+</head>
+<body>
+  <section class="section" id="section">
+    <div class="stage">
+      <div class="copy">
+        <div class="kicker"><span class="dot"></span> Aplos Data</div>
+        <h1>Operate<br/>as <em>One.</em></h1>
+        <p class="sub">Your CRM, your ERP, your warehouse, your spreadsheets — every system your business runs on, unified into a single operational fabric. No more silos. No more stale data. Just one clear view.</p>
+        <div class="actions">
+          <button class="btn btn-primary">
+            See a live demo
+            <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn btn-ghost">Explore integrations</button>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="sphere-wrap">
+        <div class="sphere" id="sphere">
+          <canvas id="lines"></canvas>
+          <div class="nodes" id="nodes"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <span><kbd>drag</kbd> to rotate</span>
+      <span><kbd>click</kbd> to trace flows</span>
+    </div>
+
+    <!-- decorative corner matrix -->
+    <svg class="dot-matrix" viewBox="0 0 300 300" aria-hidden="true">
+      <g fill="var(--mint-400)">
+      </g>
+    </svg>
+
+    <div class="tooltip" id="tooltip">
+      <div class="tooltip-name"></div>
+      <div class="tooltip-cat"></div>
+    </div>
+  </section>
+
+  <!-- Tweaks panel -->
+  <div class="tweaks" id="tweaks">
+    <h4><span style="width:6px;height:6px;border-radius:50%;background:var(--mint-400);display:inline-block"></span> Tweaks</h4>
+    <div class="tweak">
+      <label>Rotation speed <b id="v-speed">1.0×</b></label>
+      <input type="range" id="t-speed" min="0" max="3" step="0.1" value="1" />
+    </div>
+    <div class="tweak">
+      <label>System density <b id="v-density">60</b></label>
+      <input type="range" id="t-density" min="20" max="120" step="5" value="60" />
+    </div>
+    <div class="tweak">
+      <label>Connection opacity <b id="v-lines">50%</b></label>
+      <input type="range" id="t-lines" min="0" max="100" step="5" value="50" />
+    </div>
+    <div class="tweak">
+      <label>Theme</label>
+      <div class="seg" id="t-theme">
+        <button data-v="dark" class="on">Forest</button>
+        <button data-v="light">Mint</button>
+      </div>
+    </div>
+    <div class="tweak">
+      <label>Auto-rotate</label>
+      <div class="seg" id="t-auto">
+        <button data-v="on" class="on">On</button>
+        <button data-v="off">Off</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editmode defaults (for persistence) -->
+  <script>
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "speed": 0.3,
+      "density": 70,
+      "lineOpacity": 0.3,
+      "theme": "dark",
+      "autoRotate": false
+    }/*EDITMODE-END*/;
+  </script>
+
+  <script src="sphere.js"></script>
+  <script src="tweaks.js"></script>
+</body>
+</html>
