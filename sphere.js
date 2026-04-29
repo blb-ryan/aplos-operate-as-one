@@ -177,7 +177,7 @@
       el.className = 'aplos-node';
       el.dataset.idx = i;
       const iconUrl = sys.url
-        ? sys.url
+        ? `${sys.url}?v=2`
         : (sys.slug ? `https://cdn.jsdelivr.net/npm/simple-icons@11/icons/${sys.slug}.svg` : '');
       const hasIcon = !!iconUrl;
       el.innerHTML = `
