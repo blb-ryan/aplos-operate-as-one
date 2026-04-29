@@ -53,7 +53,6 @@
 
 [data-aplos-sphere] .aplos-node:hover .aplos-node-inner {
   box-shadow:
-    0 0 0 2px #7fcaa5,
     0 10px 30px rgba(127, 202, 165, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transform: scale(1.08);
@@ -61,7 +60,6 @@
 
 [data-aplos-sphere] .aplos-node.active .aplos-node-inner {
   box-shadow:
-    0 0 0 2px #7fcaa5,
     0 10px 30px rgba(127, 202, 165, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
