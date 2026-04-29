@@ -1,0 +1,102 @@
+/* Aplos Data — Operate as One sphere
+ * Drop-in stylesheet. All selectors are namespaced so they won't collide
+ * with the host page. The widget fills its container; give the container
+ * an explicit size (or aspect ratio) for best results.
+ */
+
+[data-aplos-sphere] {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+[data-aplos-sphere].dragging { cursor: grabbing; }
+
+[data-aplos-sphere] canvas.aplos-lines,
+[data-aplos-sphere] .aplos-nodes {
+  position: absolute;
+  inset: 0;
+}
+[data-aplos-sphere] canvas.aplos-lines {
+  width: 100%;
+  height: 100%;
+}
+
+[data-aplos-sphere] .aplos-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+[data-aplos-sphere] .aplos-node-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0a3a31;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+  overflow: hidden;
+}
+
+[data-aplos-sphere] .aplos-node:hover .aplos-node-inner {
+  box-shadow:
+    0 0 0 2px #7fcaa5,
+    0 10px 30px rgba(127, 202, 165, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: scale(1.08);
+}
+
+[data-aplos-sphere] .aplos-node.active .aplos-node-inner {
+  box-shadow:
+    0 0 0 2px #7fcaa5,
+    0 10px 30px rgba(127, 202, 165, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-aplos-sphere] .aplos-node-logo {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  /* normalize SI icons to flat black */
+  filter: brightness(0);
+}
+
+[data-aplos-sphere] .aplos-node-mark {
+  font-size: calc(var(--aplos-tile-size, 40px) * 0.36);
+  line-height: 1;
+}
+
+/* tooltip */
+[data-aplos-sphere] .aplos-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #0A2222;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 36px));
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 140ms ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+[data-aplos-sphere] .aplos-tooltip.show { opacity: 1; }

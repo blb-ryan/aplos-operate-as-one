@@ -1,137 +1,69 @@
 // Aplos Data — Operate as One sphere
-// Fibonacci-distributed points on a sphere, rotated around Y (slight X tilt),
-// projected to 2D with perspective. DOM nodes for crisp logo tiles,
-// canvas overlay for connection lines + pulses.
+// Drop-in widget. Mount target: any element matching `[data-aplos-sphere]`
+// (or the legacy id="sphere"). Scales to its container.
+//
+// Renders a Fibonacci-distributed point cloud on a sphere. DOM nodes carry
+// crisp logo tiles; a canvas overlay handles connection lines and pulses.
 
 (function () {
   'use strict';
 
-  // ----- Catalog of placeholder SaaS systems (original monograms, not real brand marks) -----
-  // Categories mapped to colors that harmonize with the brand palette.
-  const CATS = {
-    crm:     { label: 'CRM & Sales',       color: '#7fcaa5' },
-    fin:     { label: 'Finance & ERP',     color: '#a8dcc2' },
-    data:    { label: 'Data & Warehouse',  color: '#6bb894' },
-    ops:     { label: 'Ops & Workflow',    color: '#4f9b7a' },
-    mktg:    { label: 'Marketing',         color: '#c9ead9' },
-    hr:      { label: 'HR & People',       color: '#8fd4b0' },
-    comms:   { label: 'Comms & Support',   color: '#b5e1c9' },
-    dev:     { label: 'Eng & DevOps',      color: '#5ea585' },
-  };
-
-  // Top SaaS products keyed to Simple Icons slugs (cdn.jsdelivr.net).
-  // `s` is the slug on simpleicons.org. Logos load as SVG and are recolored black.
-  const POOL = [
-    // CRM & Sales
-    { n: 'Salesforce',       s: 'salesforce',       c: 'crm'  },
-    { n: 'HubSpot',          s: 'hubspot',          c: 'crm'  },
-    { n: 'Pipedrive',        s: 'pipedrive',        c: 'crm'  },
-    { n: 'Zoho',             s: 'zoho',             c: 'crm'  },
-    { n: 'Intercom',         s: 'intercom',         c: 'crm'  },
-    { n: 'Mailchimp',        s: 'mailchimp',        c: 'crm'  },
-    // Finance & ERP
-    { n: 'QuickBooks',       s: 'quickbooks',       c: 'fin'  },
-    { n: 'Xero',             s: 'xero',             c: 'fin'  },
-    { n: 'Stripe',           s: 'stripe',           c: 'fin'  },
-    { n: 'PayPal',           s: 'paypal',           c: 'fin'  },
-    { n: 'Square',           s: 'square',           c: 'fin'  },
-    { n: 'SAP',              s: 'sap',              c: 'fin'  },
-    { n: 'Oracle',           s: 'oracle',           c: 'fin'  },
-    { n: 'NetSuite',         s: 'oracle',           c: 'fin'  },
-    { n: 'Workday',          s: 'workday',          c: 'fin'  },
-    { n: 'Expensify',        s: 'expensify',        c: 'fin'  },
-    // Data & Warehouse
-    { n: 'Snowflake',        s: 'snowflake',        c: 'data' },
-    { n: 'Databricks',       s: 'databricks',       c: 'data' },
-    { n: 'MongoDB',          s: 'mongodb',          c: 'data' },
-    { n: 'PostgreSQL',       s: 'postgresql',       c: 'data' },
-    { n: 'BigQuery',         s: 'googlebigquery',   c: 'data' },
-    { n: 'Looker',           s: 'looker',           c: 'data' },
-    { n: 'Tableau',          s: 'tableau',          c: 'data' },
-    { n: 'Power BI',         s: 'powerbi',          c: 'data' },
-    { n: 'Airtable',         s: 'airtable',         c: 'data' },
-    { n: 'Segment',          s: 'segment',          c: 'data' },
-    // Ops & Workflow
-    { n: 'Asana',            s: 'asana',            c: 'ops'  },
-    { n: 'Monday',           s: 'mondaydotcom',     c: 'ops'  },
-    { n: 'Trello',           s: 'trello',           c: 'ops'  },
-    { n: 'ClickUp',          s: 'clickup',          c: 'ops'  },
-    { n: 'Notion',           s: 'notion',           c: 'ops'  },
-    { n: 'Zapier',           s: 'zapier',           c: 'ops'  },
-    { n: 'Smartsheet',       s: 'smartsheet',       c: 'ops'  },
-    { n: 'Basecamp',         s: 'basecamp',         c: 'ops'  },
-    // Marketing
-    { n: 'Marketo',          s: 'adobe',            c: 'mktg' },
-    { n: 'Klaviyo',          s: 'klaviyo',          c: 'mktg' },
-    { n: 'SendGrid',         s: 'sendgrid',         c: 'mktg' },
-    { n: 'Hootsuite',        s: 'hootsuite',        c: 'mktg' },
-    { n: 'Canva',            s: 'canva',            c: 'mktg' },
-    { n: 'Figma',            s: 'figma',            c: 'mktg' },
-    { n: 'Webflow',          s: 'webflow',          c: 'mktg' },
-    { n: 'WordPress',        s: 'wordpress',        c: 'mktg' },
-    // HR & People
-    { n: 'BambooHR',         s: 'bamboohr',         c: 'hr'   },
-    { n: 'Gusto',            s: 'gusto',            c: 'hr'   },
-    { n: 'ADP',              s: 'adp',              c: 'hr'   },
-    { n: 'Greenhouse',       s: 'greenhouse',       c: 'hr'   },
-    { n: 'Lever',            s: 'lever',            c: 'hr'   },
-    { n: 'LinkedIn',         s: 'linkedin',         c: 'hr'   },
-    // Comms & Support
-    { n: 'Slack',            s: 'slack',            c: 'comms'},
-    { n: 'Microsoft Teams',  s: 'microsoftteams',   c: 'comms'},
-    { n: 'Zoom',             s: 'zoom',             c: 'comms'},
-    { n: 'Gmail',            s: 'gmail',            c: 'comms'},
-    { n: 'Outlook',          s: 'microsoftoutlook', c: 'comms'},
-    { n: 'Zendesk',          s: 'zendesk',          c: 'comms'},
-    { n: 'Freshdesk',        s: 'freshworks',       c: 'comms'},
-    { n: 'Twilio',           s: 'twilio',           c: 'comms'},
-    { n: 'Calendly',         s: 'calendly',         c: 'comms'},
-    // Eng & DevOps
-    { n: 'GitHub',           s: 'github',           c: 'dev'  },
-    { n: 'GitLab',           s: 'gitlab',           c: 'dev'  },
-    { n: 'Bitbucket',        s: 'bitbucket',        c: 'dev'  },
-    { n: 'Jira',             s: 'jira',             c: 'dev'  },
-    { n: 'Confluence',       s: 'confluence',       c: 'dev'  },
-    { n: 'Jenkins',          s: 'jenkins',          c: 'dev'  },
-    { n: 'Datadog',          s: 'datadog',          c: 'dev'  },
-    { n: 'PagerDuty',        s: 'pagerduty',        c: 'dev'  },
-    { n: 'New Relic',        s: 'newrelic',         c: 'dev'  },
-    { n: 'Sentry',           s: 'sentry',           c: 'dev'  },
-    { n: 'AWS',              s: 'amazonwebservices',c: 'dev'  },
-    { n: 'Google Cloud',     s: 'googlecloud',      c: 'dev'  },
-    { n: 'Azure',            s: 'microsoftazure',   c: 'dev'  },
-    { n: 'Docker',           s: 'docker',           c: 'dev'  },
-    { n: 'Kubernetes',       s: 'kubernetes',       c: 'dev'  },
-    { n: 'Terraform',        s: 'terraform',        c: 'dev'  },
-    { n: 'Cloudflare',       s: 'cloudflare',       c: 'dev'  },
-    { n: 'Vercel',           s: 'vercel',           c: 'dev'  },
-    { n: 'Netlify',          s: 'netlify',          c: 'dev'  },
-    { n: 'Auth0',            s: 'auth0',            c: 'dev'  },
-    { n: 'Okta',             s: 'okta',             c: 'dev'  },
-    { n: 'Supabase',         s: 'supabase',         c: 'dev'  },
-    { n: 'Elastic',          s: 'elasticsearch',    c: 'data' },
-    { n: 'Redis',            s: 'redis',            c: 'data' },
-    { n: 'Dropbox',          s: 'dropbox',          c: 'ops'  },
-    { n: 'Box',              s: 'box',              c: 'ops'  },
-    { n: 'Shopify',          s: 'shopify',          c: 'crm'  },
-    { n: 'DocuSign',         s: 'docusign',         c: 'ops'  },
-    { n: 'Asana',            s: 'asana',            c: 'ops'  },
+  // ----- Catalog: 50 systems -----
+  // `s` is a Simple Icons slug (https://simpleicons.org). When empty, the
+  // tile renders the system's monogram (first 1-2 letters) as a fallback.
+  // `u` overrides `s` with a direct URL/path to a local SVG.
+  const SYSTEMS = [
+    { n: 'Salesforce',           s: 'salesforce'        },
+    { n: 'Power BI',             s: 'powerbi'           },
+    { n: 'Databricks',           s: 'databricks'        },
+    { n: 'Snowflake',            s: 'snowflake'         },
+    { n: 'MuleSoft',             s: 'mulesoft'          },
+    { n: 'Tableau',              s: 'tableau'           },
+    { n: 'Amazon Redshift',      s: 'amazonredshift'    },
+    { n: 'BigCommerce',          s: 'bigcommerce'       },
+    { n: 'Oracle ERP Cloud',     s: 'oracle'            },
+    { n: 'ServiceNow',           u: 'logos/servicenow.svg' },
+    { n: 'HubSpot',              s: 'hubspot'           },
+    { n: 'SAP',                  s: 'sap'               },
+    { n: 'Google Analytics',     s: 'googleanalytics'   },
+    { n: 'Magento',              s: 'magento'           },
+    { n: 'Informatica',          s: 'informatica'       },
+    { n: 'Workday',              u: 'logos/workday.svg' },
+    { n: 'Collibra',             u: 'logos/collibra.svg' },
+    { n: 'QuickBooks',           s: 'quickbooks'        },
+    { n: 'Sage',                 s: 'sage'              },
+    { n: 'Monday.com',           u: 'logos/monday.svg' },
+    { n: 'Trello',               s: 'trello'            },
+    { n: 'ServiceNow ITSM',      u: 'logos/servicenow.svg' },
+    { n: 'Zendesk',              s: 'zendesk'           },
+    { n: 'Asana',                s: 'asana'             },
+    { n: 'Jira',                 s: 'jira'              },
+    { n: 'Workato',              u: 'logos/workato.svg' },
+    { n: 'Boomi',                u: 'logos/boomi.svg'  },
+    { n: 'Zapier',               s: 'zapier'            },
+    { n: 'Treasure AI',          u: 'logos/treasureai.svg' },
+    { n: 'Microsoft Azure',      s: 'microsoftazure'    },
+    { n: 'PostgreSQL',           s: 'postgresql'        },
+    { n: 'MongoDB',              s: 'mongodb'           },
+    { n: 'Microsoft Fabric',     u: 'logos/fabric.svg' },
+    { n: 'Dynamics 365',         s: 'dynamics365'       },
+    { n: 'NetSuite',             s: 'oracle'            },
+    { n: 'Smartsheet',           u: 'logos/smartsheet.svg' },
+    { n: 'ADP',                  s: 'adp'               },
+    { n: 'Qlik',                 s: 'qlik'              },
+    { n: 'Alteryx',              s: 'alteryx'           },
+    { n: 'Datadog',              s: 'datadog'           },
+    { n: 'Amazon S3',            s: 'amazons3'          },
+    { n: 'GitHub',               s: 'github'            },
+    { n: 'Bitbucket',            s: 'bitbucket'         },
+    { n: 'Talend',               u: 'logos/talend.svg'  },
+    { n: 'ZoomInfo',             u: 'logos/zoominfo.svg' },
+    { n: 'Marketo',              u: 'logos/marketo.svg' },
+    { n: 'BigQuery',             s: 'googlebigquery'    },
+    { n: 'Looker',               s: 'looker'            },
+    { n: 'Teradata',             u: 'logos/teradata.svg'},
+    { n: 'IBM i-Series',         s: 'ibm'               },
   ];
-
-  // Each tile has a white/tinted background; we give each category a subtle base tint.
-  function tileBg(cat) {
-    const map = {
-      crm:   '#ffffff',
-      fin:   '#f3faf6',
-      data:  '#eef8f2',
-      ops:   '#ffffff',
-      mktg:  '#ffffff',
-      hr:    '#f6fbf8',
-      comms: '#ffffff',
-      dev:   '#f0f6f3',
-    };
-    return map[cat] || '#ffffff';
-  }
 
   // ---- 3D math helpers ----
   function rotY(p, a) {
@@ -160,85 +92,102 @@
 
   // ---- State ----
   const state = {
-    count: 60,
     speed: 1.0,
     lineOpacity: 0.5,
     autoRotate: true,
     rotY: 0,
-    rotX: -0.22,
-    targetRotX: -0.22,
+    rotX: -0.18,
+    targetRotX: -0.18,
     dragging: false,
     lastX: 0, lastY: 0,
-    velY: 0.003, // auto-rotate velocity
+    velY: 0.0015,
     velX: 0,
-    systems: [],   // {name, mark, cat, basePos, connections[]}
-    active: null,  // index of clicked node
-    pulses: [],    // active pulses {from, to, start, duration}
+    systems: [],
+    active: null,
+    pulses: [],
     hoverIdx: -1,
     lastT: performance.now(),
   };
 
   // ---- DOM refs ----
-  const sphereEl = document.getElementById('sphere');
-  const nodesEl = document.getElementById('nodes');
-  const canvas = document.getElementById('lines');
+  const sphereEl =
+    document.querySelector('[data-aplos-sphere]') ||
+    document.getElementById('sphere');
+  if (!sphereEl) return;
+
+  // Build the inner shell if the host only provided an outer mount.
+  let nodesEl = sphereEl.querySelector('.aplos-nodes');
+  let canvas = sphereEl.querySelector('canvas.aplos-lines');
+  if (!nodesEl) {
+    canvas = document.createElement('canvas');
+    canvas.className = 'aplos-lines';
+    sphereEl.appendChild(canvas);
+    nodesEl = document.createElement('div');
+    nodesEl.className = 'aplos-nodes';
+    sphereEl.appendChild(nodesEl);
+  }
   const ctx = canvas.getContext('2d');
-  const tooltip = document.getElementById('tooltip');
-  const legendEl = document.getElementById('legend');
-  const statCount = document.getElementById('stat-count'); // may be null
+
+  // tooltip lives inside the sphere mount so positioning stays local
+  let tooltip = sphereEl.querySelector('.aplos-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.className = 'aplos-tooltip';
+    tooltip.innerHTML = '<div class="aplos-tooltip-name"></div>';
+    sphereEl.appendChild(tooltip);
+  }
 
   // ---- Build systems + nodes ----
-  function buildSystems(n) {
-    // sample pool (no duplicates until we exhaust it)
-    const pool = POOL.slice();
-    const chosen = [];
-    for (let i = 0; i < n; i++) {
-      if (pool.length === 0) break;
-      const idx = Math.floor(Math.random() * pool.length);
-      chosen.push(pool.splice(idx, 1)[0]);
-    }
-    const positions = fibSphere(chosen.length, 1); // unit sphere
-    const systems = chosen.map((s, i) => ({
+  function buildSystems() {
+    const positions = fibSphere(SYSTEMS.length, 1);
+    const systems = SYSTEMS.map((s, i) => ({
       name: s.n,
-      slug: s.s,
-      cat: s.c,
+      slug: s.s || '',
+      url: s.u || '',
       basePos: positions[i],
       el: null,
     }));
-    // For each system pick 2-3 "connections" (nearest neighbors) — these are the
-    // lines drawn + paths pulses travel along. Computed once.
+    // 5–6 nearest neighbors per node → mesh, not spokes.
     for (let i = 0; i < systems.length; i++) {
       const a = systems[i].basePos;
       const ranked = [];
       for (let j = 0; j < systems.length; j++) {
         if (i === j) continue;
         const b = systems[j].basePos;
-        const d2 = (a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2;
+        const d2 = (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2;
         ranked.push({ j, d2 });
       }
       ranked.sort((u, v) => u.d2 - v.d2);
-      // 5–6 nearest neighbors → every logo visibly connects to the ones
-      // around it, creating a true mesh rather than sparse spokes.
       const k = 5 + (i % 2);
-      systems[i].connections = ranked.slice(0, k).map(r => r.j);
+      systems[i].connections = ranked.slice(0, k).map((r) => r.j);
     }
     return systems;
+  }
+
+  function monogram(name) {
+    const parts = name.replace(/[^A-Za-z0-9 ]/g, '').split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return (parts[0] || '?').slice(0, 2).toUpperCase();
   }
 
   function renderNodes() {
     nodesEl.innerHTML = '';
     state.systems.forEach((sys, i) => {
       const el = document.createElement('div');
-      el.className = 'node';
+      el.className = 'aplos-node';
       el.dataset.idx = i;
-      const iconUrl = `https://cdn.jsdelivr.net/npm/simple-icons@11/icons/${sys.slug}.svg`;
+      const iconUrl = sys.url
+        ? sys.url
+        : (sys.slug ? `https://cdn.jsdelivr.net/npm/simple-icons@11/icons/${sys.slug}.svg` : '');
+      const hasIcon = !!iconUrl;
       el.innerHTML = `
-        <div class="node-inner" style="--tile-bg:${tileBg(sys.cat)};--cat-color:${CATS[sys.cat].color}">
-          <img class="node-logo" src="${iconUrl}" alt="${sys.name}" loading="lazy"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>
-          <span class="node-mark" style="display:none">${(sys.name[0] || '?').toUpperCase()}</span>
+        <div class="aplos-node-inner">
+          ${hasIcon
+            ? `<img class="aplos-node-logo" src="${iconUrl}" alt="${sys.name}" loading="lazy"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>`
+            : ''}
+          <span class="aplos-node-mark"${hasIcon ? ' style="display:none"' : ''}>${monogram(sys.name)}</span>
         </div>`;
-      // events
       el.addEventListener('mouseenter', () => {
         state.hoverIdx = i;
         showTooltip(i);
@@ -256,48 +205,29 @@
     });
   }
 
-  function renderLegend() {
-    const used = new Set(state.systems.map(s => s.cat));
-    legendEl.innerHTML = '';
-    Object.entries(CATS).forEach(([key, cat]) => {
-      if (!used.has(key)) return;
-      const item = document.createElement('div');
-      item.className = 'legend-item';
-      item.innerHTML = `<span class="legend-dot" style="--c:${cat.color}"></span> ${cat.label}`;
-      legendEl.appendChild(item);
-    });
-  }
-
   function showTooltip(i) {
     const sys = state.systems[i];
-    tooltip.querySelector('.tooltip-name').textContent = sys.name;
-    tooltip.querySelector('.tooltip-cat').textContent = CATS[sys.cat].label;
+    tooltip.querySelector('.aplos-tooltip-name').textContent = sys.name;
     tooltip.classList.add('show');
     positionTooltip(i);
   }
   function hideTooltip() { tooltip.classList.remove('show'); }
   function positionTooltip(i) {
-    // position relative to sphere container
     const sys = state.systems[i];
     if (!sys.screen) return;
-    const rect = sphereEl.getBoundingClientRect();
-    const sectionRect = sphereEl.closest('.section').getBoundingClientRect();
-    tooltip.style.left = (rect.left - sectionRect.left + sys.screen.x) + 'px';
-    tooltip.style.top  = (rect.top  - sectionRect.top  + sys.screen.y) + 'px';
+    tooltip.style.left = sys.screen.x + 'px';
+    tooltip.style.top  = sys.screen.y + 'px';
   }
 
   function activate(i) {
     state.active = (state.active === i) ? null : i;
-    // reset classes
-    state.systems.forEach(s => s.el && s.el.classList.remove('active'));
+    state.systems.forEach((s) => s.el && s.el.classList.remove('active'));
     state.pulses = [];
     if (state.active !== null) {
       state.systems[i].el.classList.add('active');
-      // emit pulses along connections
       const now = performance.now();
       state.systems[i].connections.forEach((j, k) => {
         state.pulses.push({ from: i, to: j, start: now + k * 80, duration: 900, color: '#c9ead9' });
-        // second-order (ripples)
         state.systems[j].connections.forEach((kj, kk) => {
           if (kj === i) return;
           state.pulses.push({ from: j, to: kj, start: now + 500 + kk * 80, duration: 1000, color: '#7fcaa5' });
@@ -325,13 +255,11 @@
     if (state.autoRotate && !state.dragging) {
       state.rotY += state.velY * state.speed * (dt / 16.67);
     } else if (!state.dragging) {
-      // decelerate
       state.rotY += state.velY * (dt / 16.67);
       state.velY *= 0.96;
       state.velX *= 0.96;
       state.rotX += state.velX * (dt / 16.67);
     }
-    // ease back to slight tilt when not interacting
     if (!state.dragging) {
       state.rotX += (state.targetRotX - state.rotX) * 0.02;
     }
@@ -344,19 +272,17 @@
     const rect = sphereEl.getBoundingClientRect();
     const W = rect.width, H = rect.height;
     const cx = W / 2, cy = H / 2;
-    const R = Math.min(W, H) * 0.42; // sphere radius on screen
-    const camDist = 2.6;             // perspective depth (units of R)
+    const R = Math.min(W, H) * 0.42;
+    const camDist = 2.6;
 
-    // project every system
     const projected = state.systems.map((sys, i) => {
       let p = sys.basePos;
       p = rotY(p, state.rotY);
       p = rotX(p, state.rotX);
-      const depth = (p.z + camDist) / (camDist + 1);   // 0..~1
-      const persp = camDist / (camDist - p.z);          // >1 front, <1 back
+      const persp = camDist / (camDist - p.z);
       const sx = cx + p.x * R * persp;
       const sy = cy + p.y * R * persp;
-      sys.screen = { x: sx, y: sy, z: p.z, persp, depth };
+      sys.screen = { x: sx, y: sy, z: p.z, persp };
       return { i, sx, sy, z: p.z, persp };
     });
 
@@ -369,18 +295,14 @@
       const conns = state.systems[i].connections;
       for (let k = 0; k < conns.length; k++) {
         const j = conns[k];
-        if (j < i) continue; // avoid duplicate undirected edges
+        if (j < i) continue;
         const b = projected[j];
-        // front-facing fade: average z, map to alpha
         const avgZ = (a.z + b.z) / 2;
-        const depthAlpha = Math.max(0, (avgZ + 1) / 2); // 0 back .. 1 front
-        // Sharper depth falloff so the back hemisphere's denser mesh doesn't
-        // compete with the front-facing connections the eye is tracking.
+        const depthAlpha = Math.max(0, (avgZ + 1) / 2);
         const baseA = lineAlpha * (0.06 + Math.pow(depthAlpha, 1.6) * 0.7);
         const isActive = state.active !== null && (i === state.active || j === state.active);
-        const hot = isActive ? 1.0 : 0;
         ctx.strokeStyle = isActive
-          ? `rgba(201, 234, 217, ${0.85})`
+          ? `rgba(201, 234, 217, 0.85)`
           : `rgba(127, 202, 165, ${baseA.toFixed(3)})`;
         ctx.lineWidth = isActive ? 1.4 : 1;
         ctx.beginPath();
@@ -392,7 +314,7 @@
 
     // ---- pulses ----
     const now = performance.now();
-    state.pulses = state.pulses.filter(p => now - p.start < p.duration + 100);
+    state.pulses = state.pulses.filter((p) => now - p.start < p.duration + 100);
     for (const p of state.pulses) {
       const u = (now - p.start) / p.duration;
       if (u < 0 || u > 1) continue;
@@ -412,17 +334,14 @@
       ctx.restore();
     }
 
-    // ---- nodes: sort by z so front draws on top, apply scale + opacity ----
+    // ---- nodes ----
     const sorted = projected.slice().sort((u, v) => u.z - v.z);
     const R2 = Math.min(W, H);
+    const densityK = Math.max(0.65, 1 - (state.systems.length - 40) * 0.0035);
+    const base = R2 * 0.052 * densityK;
     for (const pp of sorted) {
       const sys = state.systems[pp.i];
       if (!sys.el) continue;
-      // size: base * perspective scale
-      // size scales with the sphere radius so tiles stay visually balanced
-      // no matter how big the sphere is. At 60 systems -> ~5.2% of radius.
-      const densityK = Math.max(0.65, 1 - (state.systems.length - 40) * 0.0035);
-      const base = R2 * 0.052 * densityK;
       const size = base * pp.persp * 0.9;
       const depth = Math.max(0, (pp.z + 1) / 2);
       const opacity = 0.35 + depth * 0.65;
@@ -433,12 +352,10 @@
       sys.el.style.opacity = opacity.toFixed(3);
       sys.el.style.filter = `saturate(${(0.6 + depth * 0.6).toFixed(2)})`;
       sys.el.style.zIndex = Math.round((pp.z + 2) * 500);
-      sys.el.style.setProperty('--tile-size', size + 'px');
-      // hide very back tiles a touch to reduce visual noise
+      sys.el.style.setProperty('--aplos-tile-size', size + 'px');
       sys.el.style.pointerEvents = depth < 0.25 ? 'none' : 'auto';
     }
 
-    // tooltip position follow (if hovering)
     if (state.hoverIdx >= 0) positionTooltip(state.hoverIdx);
   }
 
@@ -459,7 +376,7 @@
     state.lastX = pt.clientX;
     state.lastY = pt.clientY;
     state.velY = dx * 0.005;
-    state.velX = dy * 0.005;
+    state.velX = -dy * 0.005;
     state.rotY += state.velY;
     state.rotX = Math.max(-1.2, Math.min(1.2, state.rotX + state.velX));
   }
@@ -467,10 +384,7 @@
     if (!state.dragging) return;
     state.dragging = false;
     sphereEl.classList.remove('dragging');
-    // restore subtle auto-rotation velocity
-    if (state.autoRotate) {
-      state.velY = 0.003;
-    }
+    if (state.autoRotate) state.velY = 0.0015;
   }
   sphereEl.addEventListener('mousedown', onDown);
   window.addEventListener('mousemove', onMove);
@@ -480,35 +394,27 @@
   window.addEventListener('touchend', onUp);
 
   // background click clears activation
-  document.getElementById('section').addEventListener('click', () => {
-    if (state.active !== null) activate(state.active);
+  sphereEl.addEventListener('click', (e) => {
+    if (e.target === sphereEl || e.target === canvas) {
+      if (state.active !== null) activate(state.active);
+    }
   });
 
-  // ---- Public API (for tweaks) ----
+  // ---- Public API ----
   window.AplosSphere = {
-    setCount(n) {
-      if (n === state.systems.length) return;
-      state.count = n;
-      state.systems = buildSystems(n);
-      renderNodes();
-      renderLegend();
-      statCount && (statCount.textContent = n);
-    },
-    setSpeed(s) { state.speed = s; state.velY = 0.003 * (state.autoRotate ? 1 : 0); },
+    setSpeed(s) { state.speed = s; state.velY = 0.0015 * (state.autoRotate ? 1 : 0); },
     setLineOpacity(a) { state.lineOpacity = a; },
     setAutoRotate(b) {
       state.autoRotate = b;
       if (!b) { state.velY *= 0.5; }
-      else state.velY = 0.003;
+      else state.velY = 0.0015;
     },
-    setTheme(t) { document.body.classList.toggle('theme-light', t === 'light'); },
   };
 
   // ---- Init ----
   function init() {
-    state.systems = buildSystems(state.count);
+    state.systems = buildSystems();
     renderNodes();
-    renderLegend();
     resize();
     requestAnimationFrame((t) => { state.lastT = t; tick(t); });
   }
